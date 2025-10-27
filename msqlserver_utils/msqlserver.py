@@ -229,7 +229,7 @@ class MSQLServer:
         password = os.getenv('MSQL_PASSWORD')
         driver = os.getenv('MSQL_DRIVER')  # dùng driver mặc định (không cần bản 17)
         
-        conn_str = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}"
+        conn_str = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password};Encrypt=yes;TrustServerCertificate=yes;"
         conn = pyodbc.connect(conn_str)
         return conn
     

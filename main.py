@@ -25,6 +25,7 @@ async def load_to_datalake():
         return JSONResponse(content={"message": message}, status_code=200)
 
     except Exception as e:
+        print(str(e))
         return JSONResponse({"message": f"Load fail: {str(e)}"}, status_code=500)
 
 
@@ -38,5 +39,7 @@ async def load_to_datawarehouse(bucket_name:str, date_to_extract:str):
         return JSONResponse(content={"message": message}, status_code=200)
 
     except Exception as e:
+        print(str(e))
+
         return JSONResponse({"message": f"Load fail: {str(e)}"}, status_code=500)
 

@@ -2,6 +2,8 @@ import datetime
 from minio import Minio
 from kafka_utils.kafka import kafkautils
 from minio_utils.minio import MinioClient
+from spark_utils.spark import SparkUtils
+from services.ArrangeData import order_xAPI_data_from_kafka
 import os
 import json
 import io
@@ -25,16 +27,23 @@ def load_to_minio():
     else:
         print("haveee message")
         
-    data = []
-    for _, msgs in records.items():
-        for msg in msgs:
-            print(msg.value.decode('utf-8')[0])
+    # oredered_data = []
+    # unordered_datas = []
+    # for _, msgs in records.items():
+    #     for msg in msgs:
+    #         print(msg.value.decode('utf-8')[0])
 
-            if msg.value.decode('utf-8')[0] == '{':
-                data.append(json.loads(msg.value.decode('utf-8').replace('\'', '\"')))
+    #         if msg.value.decode('utf-8')[0] == '{':
+    #             datajson = json.loads(msg.value.decode('utf-8').replace('\'', '\"'))
+    #             data = {
+    #                 "time_stamp": datajson["timestamp"],
+    #                 "data": datajson
+    #             }
+    #             unordered_datas.append(data)
 
+    oredered_data = order_xAPI_data_from_kafka(records)
 
-    json_bytes = json.dumps(data).encode('utf-8')
+    json_bytes = json.dumps(oredered_data).encode('utf-8')
 
 
     found = minio_client.check_bucket_exists(bucket_name=bucket_name)
