@@ -2,7 +2,7 @@ import os
 import requests
 from requests.auth import HTTPBasicAuth
 from kafka_utils.kafka import kafkautils
-
+import json
 def get_statements():
 
     API_ENDPOINT = os.getenv("API_ENDPOINT_SCORM")           # Trả về None nếu biến không tồn tại
@@ -18,7 +18,7 @@ def get_statements():
     }
     try:
         response = requests.get(API_ENDPOINT, headers=headers, params=params, auth=HTTPBasicAuth(API_KEY, API_SECRET))
-        print(response.json())
+        print(json.dumps(response.json(), indent=4, ensure_ascii=False))
         
         if response.status_code == 200:
             for response in response.json()['statements']:

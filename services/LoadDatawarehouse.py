@@ -1,13 +1,6 @@
 from minio_utils.minio import MinioClient
 from msqlserver_utils.msqlserver import (
-    MSQLServer,
-    insert_dim_actor,
-    insert_dim_verb,
-    insert_activity_detail,
-    insert_dim_context,
-    insert_bridge_context_activity,
-    insert_fact_statement,
-    safe_get
+    MSQLServer
 )
 import datetime
 
@@ -31,8 +24,7 @@ class ETL_To_DataWarehouse:
         """
             object_names: list object to load to datawarehouse
         """
-        with MSQLServer() as conn:
-            cursor = conn.cursor()
+        with MSQLServer() as msql_server:
             
             for obj_name in objects_name:
                 data = self.minioClient.get_object(
@@ -42,25 +34,24 @@ class ETL_To_DataWarehouse:
                 print(obj_name)
                 for stmt in data.json():
                     try:
-                        insert_dim_actor(cursor, stmt.get("actor", {}))
-                        insert_dim_verb(cursor, stmt.get("verb", {}))
-                        insert_activity_detail(cursor, stmt.get("object", {}))
+                        msql_server.insert_dim_actor(stmt.get("actor", {}))
+                        msql_server.insert_dim_verb(stmt.get("verb", {}))
+                        msql_server.insert_activity_detail(stmt.get("object", {}))
 
                         # context + bridge
                         context = stmt.get("context", {})
                         context_id = None
                         if context:
-                            context_id = insert_dim_context(cursor, context)
-                            insert_bridge_context_activity(cursor, context_id, safe_get(context, "contextActivities"))
+                            context_id = msql_server.insert_dim_context(context)
+                            msql_server.insert_bridge_context_activity(context_id, msql_server._safe_get(context, "contextActivities"))
 
                         # fact_statement
-                        insert_fact_statement(cursor, stmt, context_id)
-
-                        conn.commit()
+                        msql_server.insert_fact_statement(stmt, context_id)
+                        msql_server.conn.commit()
                         # print(f"✅ Inserted statement {stmt.get('id')}")
                         
                     except Exception as e:
-                        conn.rollback()
+                        msql_server.conn.rollback()
                         print(f"❌ Error inserting statement {stmt.get('id')}: {e}")
                         return(f"❌ Error inserting statement {stmt.get('id')}: {e}")
                         
