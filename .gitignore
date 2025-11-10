@@ -4,10 +4,7 @@ env
 temp.py
 
 # Docker-generated data and logs
-docker-compose/airflow/data/
-docker-compose/airflow/logs/
-docker-compose/datalake/data/minio/
-docker-compose/kalfka/kalfka-logs/
+docker-compose
 
 # Python cache files
 __pycache__/
