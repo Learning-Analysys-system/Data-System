@@ -5,6 +5,9 @@ class SparkUtils:
     def __init__(self, cores = 4):
         self.spark = SparkSession.builder\
             .master(f"local[{cores}]")\
+            .config("spark.driver.memory", "4g")\
+            .config("spark.executor.memory", "4g")\
+            .config("spark.driver.maxResultSize", "2g")\
             .getOrCreate()
         
     def __enter__(self):

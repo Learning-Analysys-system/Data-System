@@ -1,14 +1,5 @@
 from minio_utils.minio import MinioClient
-from msqlserver_utils.msqlserver import (
-    MSQLServer,
-    insert_dim_actor,
-    insert_dim_verb,
-    insert_activity_detail,
-    insert_dim_context,
-    insert_bridge_context_activity,
-    insert_fact_statement,
-    safe_get
-)
+from msqlserver_utils.msqlserver import MSQLServer, safe_get
 import datetime
 
 
@@ -16,6 +7,20 @@ class ETL_To_DataWarehouse:
     def __init__(self, bucket_name):
         self.minioClient = MinioClient()
         self.bucket_name = bucket_name
+        # Ensure bucket exists
+        self._ensure_bucket_exists()
+
+    def _ensure_bucket_exists(self):
+        """Check if bucket exists, create if it doesn't"""
+        try:
+            if not self.minioClient.check_bucket_exists(self.bucket_name):
+                self.minioClient.create_bucket(self.bucket_name)
+                print(f"Created bucket: {self.bucket_name}")
+            else:
+                print(f"Bucket {self.bucket_name} already exists")
+        except Exception as e:
+            print(f"Error checking/creating bucket {self.bucket_name}: {str(e)}")
+            raise
 
     def extractData(self, date_to_extract: str, range_time_to_extract = None):
         """
@@ -32,8 +37,6 @@ class ETL_To_DataWarehouse:
             object_names: list object to load to datawarehouse
         """
         with MSQLServer() as conn:
-            cursor = conn.cursor()
-            
             for obj_name in objects_name:
                 data = self.minioClient.get_object(
                     bucket_name=self.bucket_name,
@@ -42,19 +45,19 @@ class ETL_To_DataWarehouse:
                 print(obj_name)
                 for stmt in data.json():
                     try:
-                        insert_dim_actor(cursor, stmt.get("actor", {}))
-                        insert_dim_verb(cursor, stmt.get("verb", {}))
-                        insert_activity_detail(cursor, stmt.get("object", {}))
+                        conn.insert_dim_actor(stmt.get("actor", {}))
+                        conn.insert_dim_verb(stmt.get("verb", {}))
+                        conn.insert_activity_detail(stmt.get("object", {}))
 
                         # context + bridge
                         context = stmt.get("context", {})
                         context_id = None
                         if context:
-                            context_id = insert_dim_context(cursor, context)
-                            insert_bridge_context_activity(cursor, context_id, safe_get(context, "contextActivities"))
+                            context_id = conn.insert_dim_context(context)
+                            conn.insert_bridge_context_activity(context_id, safe_get(context, "contextActivities"))
 
                         # fact_statement
-                        insert_fact_statement(cursor, stmt, context_id)
+                        conn.insert_fact_statement(stmt, context_id)
 
                         conn.commit()
                         # print(f"✅ Inserted statement {stmt.get('id')}")

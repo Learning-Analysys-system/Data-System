@@ -39,6 +39,9 @@ class MinioClient:
             return data
 
     def get_objects_name(self, bucket_name, prefix = None, recursive = True):
+        # Check if bucket exists before listing objects
+        if not self.check_bucket_exists(bucket_name):
+            raise Exception(f"Bucket '{bucket_name}' does not exist")
         objects = self.minio_client.list_objects(bucket_name=bucket_name, prefix=prefix, recursive=recursive)
         objects_name = [obj.object_name for obj in objects]
         return objects_name
