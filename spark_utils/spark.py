@@ -8,6 +8,8 @@ class SparkUtils:
             .config("spark.driver.memory", "4g")\
             .config("spark.executor.memory", "4g")\
             .config("spark.driver.maxResultSize", "2g")\
+            .config("spark.driver.host", "127.0.0.1")\
+            .config("spark.driver.bindAddress", "127.0.0.1")\
             .getOrCreate()
         
     def __enter__(self):
